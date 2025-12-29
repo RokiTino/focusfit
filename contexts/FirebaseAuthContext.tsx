@@ -106,63 +106,137 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('[Google Sign-In] Starting authentication flow...');
+
       // Check if device supports Google Play Services
+      console.log('[Google Sign-In] Checking for Google Play Services...');
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('[Google Sign-In] Google Play Services available');
 
       // Get user info from Google
+      console.log('[Google Sign-In] Requesting user sign-in...');
       const userInfo = await GoogleSignin.signIn();
+      console.log('[Google Sign-In] User info received:', userInfo.data?.user?.email);
 
       if (!userInfo.data?.idToken) {
-        throw new Error('No ID token received from Google');
+        const errorMsg = 'No ID token received from Google. Please check your Firebase Web Client ID configuration.';
+        console.error('[Google Sign-In]', errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Create Firebase credential
+      console.log('[Google Sign-In] Creating Firebase credential...');
       const googleCredential = GoogleAuthProvider.credential(userInfo.data.idToken);
 
       // Sign in with Firebase
+      console.log('[Google Sign-In] Signing in with Firebase...');
       const result = await signInWithCredential(auth, googleCredential);
+      console.log('[Google Sign-In] Successfully signed in:', result.user.email);
 
       // Check if this is a new user
       const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+      console.log('[Google Sign-In] Is new user:', isNewUser);
 
       return { error: null, isNewUser };
-    } catch (error) {
-      console.error('Google Sign-In Error:', error);
-      return { error: error as Error, isNewUser: false };
+    } catch (error: any) {
+      console.error('[Google Sign-In] Error occurred:', error);
+      console.error('[Google Sign-In] Error code:', error.code);
+      console.error('[Google Sign-In] Error message:', error.message);
+
+      // Provide user-friendly error messages
+      let userMessage = 'Unable to sign in with Google. ';
+      if (error.code === '12501') {
+        userMessage += 'Sign-in was cancelled.';
+      } else if (error.code === 'auth/invalid-credential') {
+        userMessage += 'Invalid credentials. Please check your Firebase configuration.';
+      } else if (error.message?.includes('ID token')) {
+        userMessage += 'Configuration error. Please contact support.';
+      } else if (error.message?.includes('Play Services')) {
+        userMessage += 'Google Play Services is required but not available.';
+      } else {
+        userMessage += error.message || 'Please try again.';
+      }
+
+      const enhancedError = new Error(userMessage);
+      (enhancedError as any).originalError = error;
+      return { error: enhancedError, isNewUser: false };
     }
   };
 
   const signInWithApple = async () => {
     try {
+      console.log('[Apple Sign-In] Starting authentication flow...');
+
       // Check if Apple Authentication is available on this device
       if (Platform.OS !== 'ios') {
-        throw new Error('Apple Sign-In is only available on iOS devices');
+        const errorMsg = 'Apple Sign-In is only available on iOS devices';
+        console.error('[Apple Sign-In]', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      console.log('[Apple Sign-In] Checking availability...');
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        const errorMsg = 'Apple Sign-In is not available on this device. Requires iOS 13+.';
+        console.error('[Apple Sign-In]', errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Start Apple Authentication
+      console.log('[Apple Sign-In] Requesting user sign-in...');
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
+      console.log('[Apple Sign-In] Credential received');
+
+      if (!credential.identityToken) {
+        const errorMsg = 'No identity token received from Apple';
+        console.error('[Apple Sign-In]', errorMsg);
+        throw new Error(errorMsg);
+      }
 
       // Create OAuth provider for Apple
+      console.log('[Apple Sign-In] Creating Firebase credential...');
       const provider = new OAuthProvider('apple.com');
       const oauthCredential = provider.credential({
-        idToken: credential.identityToken!,
+        idToken: credential.identityToken,
       });
 
       // Sign in with Firebase
+      console.log('[Apple Sign-In] Signing in with Firebase...');
       const result = await signInWithCredential(auth, oauthCredential);
+      console.log('[Apple Sign-In] Successfully signed in:', result.user.uid);
 
       // Check if this is a new user
       const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+      console.log('[Apple Sign-In] Is new user:', isNewUser);
 
       return { error: null, isNewUser };
-    } catch (error) {
-      console.error('Apple Sign-In Error:', error);
-      return { error: error as Error, isNewUser: false };
+    } catch (error: any) {
+      console.error('[Apple Sign-In] Error occurred:', error);
+      console.error('[Apple Sign-In] Error code:', error.code);
+      console.error('[Apple Sign-In] Error message:', error.message);
+
+      // Provide user-friendly error messages
+      let userMessage = 'Unable to sign in with Apple. ';
+      if (error.code === 'ERR_CANCELED' || error.code === '1001') {
+        userMessage += 'Sign-in was cancelled.';
+      } else if (error.code === 'auth/invalid-credential') {
+        userMessage += 'Invalid credentials. Please try again.';
+      } else if (error.message?.includes('not available')) {
+        userMessage += error.message;
+      } else if (error.message?.includes('identity token')) {
+        userMessage += 'Authentication failed. Please try again.';
+      } else {
+        userMessage += error.message || 'Please try again.';
+      }
+
+      const enhancedError = new Error(userMessage);
+      (enhancedError as any).originalError = error;
+      return { error: enhancedError, isNewUser: false };
     }
   };
 

@@ -65,7 +65,10 @@ Format your response as JSON with this structure:
   try {
     const response = await generateText({ prompt });
 
-    // Parse the AI response
+    // Log the full response for debugging
+    console.log('[AI] Full AI response:', response);
+
+    // Parse the AI response - try to find the outermost JSON object
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('[AI] No JSON found in response:', response);
@@ -79,11 +82,23 @@ Format your response as JSON with this structure:
         .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
         .replace(/[\u0000-\u001F]+/g, '');  // Remove control characters
 
+      console.log('[AI] Cleaned JSON to parse:', cleanedJson.substring(0, 200) + '...');
       aiData = JSON.parse(cleanedJson);
+      console.log('[AI] Successfully parsed JSON:', aiData);
     } catch (parseError) {
       console.error('[AI] JSON Parse Error:', parseError);
-      console.error('[AI] Attempted to parse:', jsonMatch[0].substring(0, 500));
+      console.error('[AI] Full attempted JSON:', jsonMatch[0]);
       throw new Error('Failed to parse AI response - invalid JSON format');
+    }
+
+    // Validate required fields
+    if (!aiData.workouts || !Array.isArray(aiData.workouts)) {
+      console.error('[AI] Missing or invalid workouts field');
+      throw new Error('AI response missing workouts');
+    }
+    if (!aiData.meals || !Array.isArray(aiData.meals)) {
+      console.error('[AI] Missing or invalid meals field');
+      throw new Error('AI response missing meals');
     }
 
     // Convert to FocusPlan format

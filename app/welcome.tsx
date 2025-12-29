@@ -7,17 +7,21 @@ import {
   StatusBar,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
+import { SocialButton } from '@/components/SocialButton';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { signInAsGuest } = useAuth();
+  const { signInAsGuest, signInWithGoogle, signInWithApple } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const handleGetStarted = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -42,6 +46,46 @@ export default function WelcomeScreen() {
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       // Navigation will be handled automatically by auth state change
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const { error, isNewUser } = await signInWithGoogle();
+
+    if (error) {
+      console.error('Google Sign-In error:', error);
+      Alert.alert('Sign-In Error', 'Could not sign in with Google. Please try again.');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setGoogleLoading(false);
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // If new user, navigate to onboarding; otherwise navigation handled by auth state
+      if (isNewUser) {
+        router.replace('/onboarding');
+      }
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const { error, isNewUser } = await signInWithApple();
+
+    if (error) {
+      console.error('Apple Sign-In error:', error);
+      Alert.alert('Sign-In Error', 'Could not sign in with Apple. Please try again.');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setAppleLoading(false);
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // If new user, navigate to onboarding; otherwise navigation handled by auth state
+      if (isNewUser) {
+        router.replace('/onboarding');
+      }
     }
   };
 
@@ -123,23 +167,45 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           variant="accent"
           size="large"
-          disabled={loading}
+          disabled={loading || googleLoading || appleLoading}
         />
         <Button
           title="Continue as Guest"
           onPress={handleContinueAsGuest}
           variant="secondary"
           size="large"
-          disabled={loading}
+          disabled={loading || googleLoading || appleLoading}
           icon={loading ? <ActivityIndicator size="small" color={Colors.primary} /> : undefined}
         />
+
+        {/* Divider */}
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Social Login Buttons */}
+        <SocialButton
+          provider="google"
+          onPress={handleGoogleSignIn}
+          loading={googleLoading}
+          disabled={loading || googleLoading || appleLoading}
+        />
+        <SocialButton
+          provider="apple"
+          onPress={handleAppleSignIn}
+          loading={appleLoading}
+          disabled={loading || googleLoading || appleLoading}
+        />
+
         <Button
           title="I Already Have an Account"
           onPress={handleSignIn}
           variant="ghost"
           size="medium"
           style={styles.signInButton}
-          disabled={loading}
+          disabled={loading || googleLoading || appleLoading}
         />
       </View>
     </SafeAreaView>
@@ -232,6 +298,21 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: Spacing.xl,
     gap: Spacing.md,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.gray300,
+  },
+  dividerText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    paddingHorizontal: Spacing.md,
   },
   signInButton: {
     backgroundColor: 'transparent',

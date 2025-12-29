@@ -10,19 +10,23 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
+import { SocialButton } from '@/components/SocialButton';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
@@ -71,6 +75,46 @@ export default function LoginScreen() {
   const handleBack = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.back();
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const { error: authError, isNewUser } = await signInWithGoogle();
+
+    if (authError) {
+      console.error('Google Sign-In error:', authError);
+      Alert.alert('Sign-In Error', 'Could not sign in with Google. Please try again.');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setGoogleLoading(false);
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (isNewUser) {
+        router.replace('/onboarding');
+      }
+      // Existing users will be navigated by AuthContext
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const { error: authError, isNewUser } = await signInWithApple();
+
+    if (authError) {
+      console.error('Apple Sign-In error:', authError);
+      Alert.alert('Sign-In Error', 'Could not sign in with Apple. Please try again.');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setAppleLoading(false);
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (isNewUser) {
+        router.replace('/onboarding');
+      }
+      // Existing users will be navigated by AuthContext
+    }
   };
 
   return (
@@ -167,6 +211,27 @@ export default function LoginScreen() {
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Social Login Buttons */}
+            <SocialButton
+              provider="google"
+              onPress={handleGoogleSignIn}
+              loading={googleLoading}
+              disabled={loading || googleLoading || appleLoading}
+            />
+            <SocialButton
+              provider="apple"
+              onPress={handleAppleSignIn}
+              loading={appleLoading}
+              disabled={loading || googleLoading || appleLoading}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -282,5 +347,20 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.accent,
     fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.gray300,
+  },
+  dividerText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    paddingHorizontal: Spacing.md,
   },
 });

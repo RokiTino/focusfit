@@ -9,8 +9,19 @@ import {
   sendPasswordResetEmail,
   linkWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithCredential,
+  OAuthProvider,
 } from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { Platform } from 'react-native';
 import { auth } from '@/lib/firebase';
+
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID || '',
+});
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +29,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInAsGuest: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null; isNewUser?: boolean }>;
+  signInWithApple: () => Promise<{ error: Error | null; isNewUser?: boolean }>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ error: Error | null }>;
   linkAnonymousAccount: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -91,6 +104,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      // Check if device supports Google Play Services
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      // Get user info from Google
+      const userInfo = await GoogleSignin.signIn();
+
+      if (!userInfo.data?.idToken) {
+        throw new Error('No ID token received from Google');
+      }
+
+      // Create Firebase credential
+      const googleCredential = GoogleAuthProvider.credential(userInfo.data.idToken);
+
+      // Sign in with Firebase
+      const result = await signInWithCredential(auth, googleCredential);
+
+      // Check if this is a new user
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+
+      return { error: null, isNewUser };
+    } catch (error) {
+      console.error('Google Sign-In Error:', error);
+      return { error: error as Error, isNewUser: false };
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      // Check if Apple Authentication is available on this device
+      if (Platform.OS !== 'ios') {
+        throw new Error('Apple Sign-In is only available on iOS devices');
+      }
+
+      // Start Apple Authentication
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      // Create OAuth provider for Apple
+      const provider = new OAuthProvider('apple.com');
+      const oauthCredential = provider.credential({
+        idToken: credential.identityToken!,
+      });
+
+      // Sign in with Firebase
+      const result = await signInWithCredential(auth, oauthCredential);
+
+      // Check if this is a new user
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+
+      return { error: null, isNewUser };
+    } catch (error) {
+      console.error('Apple Sign-In Error:', error);
+      return { error: error as Error, isNewUser: false };
+    }
+  };
+
   const linkAnonymousAccount = async (email: string, password: string) => {
     try {
       if (!user || !user.isAnonymous) {
@@ -111,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signInAsGuest,
+    signInWithGoogle,
+    signInWithApple,
     signOut,
     sendPasswordReset,
     linkAnonymousAccount,

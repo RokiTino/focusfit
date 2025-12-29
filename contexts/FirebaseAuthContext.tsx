@@ -70,12 +70,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
+    console.log('[Auth] Initializing auth state listener...');
 
-    return unsubscribe;
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        console.log('[Auth] Auth state changed:', firebaseUser ? 'User signed in' : 'No user');
+        setUser(firebaseUser);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('[Auth] Auth state change error:', error);
+        // Even on error, set loading to false so UI isn't stuck
+        setLoading(false);
+      }
+    );
+
+    // Failsafe: Ensure loading is set to false after 10 seconds max
+    const timeout = setTimeout(() => {
+      console.warn('[Auth] Auth initialization timeout - forcing loading to false');
+      setLoading(false);
+    }, 10000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

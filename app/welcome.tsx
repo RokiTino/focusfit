@@ -50,7 +50,9 @@ export default function WelcomeScreen() {
       setLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Navigation will be handled automatically by auth state change
+      // Navigate to dietary needs for setup
+      setLoading(false);
+      router.replace('/dietary-needs');
     }
   };
 
@@ -71,9 +73,12 @@ export default function WelcomeScreen() {
       setGoogleLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // If new user, navigate to onboarding; otherwise navigation handled by auth state
+      setGoogleLoading(false);
+      // Navigate based on user status
       if (isNewUser) {
         router.replace('/dietary-needs');
+      } else {
+        router.replace('/(tabs)');
       }
     }
   };
@@ -95,9 +100,12 @@ export default function WelcomeScreen() {
       setAppleLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // If new user, navigate to onboarding; otherwise navigation handled by auth state
+      setAppleLoading(false);
+      // Navigate based on user status
       if (isNewUser) {
         router.replace('/dietary-needs');
+      } else {
+        router.replace('/(tabs)');
       }
     }
   };

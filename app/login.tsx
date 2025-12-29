@@ -47,7 +47,9 @@ export default function LoginScreen() {
       setLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Navigation will be handled by AuthContext
+      setLoading(false);
+      // Navigate to main app
+      router.replace('/(tabs)');
     }
   };
 

@@ -67,8 +67,9 @@ export default function SignUpScreen() {
       setLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Navigate to onboarding after successful sign up
-      router.replace('/onboarding');
+      setLoading(false);
+      // Navigate to dietary needs for new user setup
+      router.replace('/dietary-needs');
     }
   };
 

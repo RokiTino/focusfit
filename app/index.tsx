@@ -1,11 +1,11 @@
 import { Redirect } from 'expo-router';
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { Colors } from '@/constants/theme';
 
 export default function Index() {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   // Show loading indicator while checking auth state
   if (loading) {
@@ -17,7 +17,7 @@ export default function Index() {
   }
 
   // Not authenticated - show welcome screen
-  if (!session) {
+  if (!user) {
     return <Redirect href="/welcome" />;
   }
 

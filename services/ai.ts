@@ -1,12 +1,15 @@
 import { generateText } from '@fastshot/ai';
 import { ADHDHurdle, FocusPlan, WorkoutTask, MealTask, DietaryRestriction } from '@/types';
+import { saveFocusPlan, getUserContextForAI } from '@/services/firestore';
 
 /**
  * Generate a personalized FocusPlan based on user's ADHD hurdles and dietary restrictions
+ * Automatically saves to Firestore if userId is provided
  */
 export async function generateFocusPlan(
   hurdles: ADHDHurdle[],
-  dietaryRestrictions?: DietaryRestriction[]
+  dietaryRestrictions?: DietaryRestriction[],
+  userId?: string
 ): Promise<FocusPlan> {
   const hurdleDescriptions = hurdles.map((h) => h.replace(/_/g, ' ')).join(', ');
 
@@ -73,7 +76,7 @@ Format your response as JSON with this structure:
     // Convert to FocusPlan format
     const plan: FocusPlan = {
       id: Date.now().toString(),
-      userId: 'current-user',
+      userId: userId || 'current-user',
       weekNumber: 1,
       workouts: aiData.workouts.map((w: any, index: number) => ({
         id: `workout-${index}`,
@@ -99,6 +102,16 @@ Format your response as JSON with this structure:
       generatedByAI: true,
     };
 
+    // Save to Firestore if userId provided
+    if (userId) {
+      try {
+        const planId = await saveFocusPlan(userId, plan);
+        plan.id = planId;
+      } catch (error) {
+        console.error('Error saving plan to Firestore:', error);
+      }
+    }
+
     return plan;
   } catch (error) {
     console.error('Error generating FocusPlan:', error);
@@ -108,22 +121,38 @@ Format your response as JSON with this structure:
 }
 
 /**
- * Generate AI Body Double chat response with dietary awareness
+ * Generate AI Body Double chat response with dietary awareness and personalized context from Firestore
  */
 export async function generateBodyDoubleResponse(
   userMessage: string,
   context?: string,
-  dietaryRestrictions?: DietaryRestriction[]
+  userId?: string
 ): Promise<string> {
+  let userContext = '';
   let dietaryContext = '';
-  if (dietaryRestrictions && dietaryRestrictions.length > 0 && !dietaryRestrictions.includes('none')) {
-    const restrictions = dietaryRestrictions
-      .map((r) => r.replace(/_/g, ' '))
-      .join(', ');
-    dietaryContext = ` IMPORTANT: User has dietary restrictions: ${restrictions}. If suggesting meals or snacks, ONLY recommend options that fit these restrictions.`;
+
+  // Fetch user context from Firestore if userId provided
+  if (userId) {
+    try {
+      const firestoreContext = await getUserContextForAI(userId);
+      userContext = ` The user's name is ${firestoreContext.name}. They've completed ${firestoreContext.recentWins} tasks this week.`;
+
+      if (
+        firestoreContext.dietaryRestrictions &&
+        firestoreContext.dietaryRestrictions.length > 0 &&
+        !firestoreContext.dietaryRestrictions.includes('none')
+      ) {
+        const restrictions = firestoreContext.dietaryRestrictions
+          .map((r) => r.replace(/_/g, ' '))
+          .join(', ');
+        dietaryContext = ` IMPORTANT: User has dietary restrictions: ${restrictions}. If suggesting meals or snacks, ONLY recommend options that fit these restrictions.`;
+      }
+    } catch (error) {
+      console.error('Error fetching user context:', error);
+    }
   }
 
-  const prompt = `You are a supportive AI Body Double helping someone with ADHD complete their fitness and meal prep tasks. ${context ? `Context: ${context}` : ''}${dietaryContext}
+  const prompt = `You are a supportive AI Body Double helping someone with ADHD complete their fitness and meal prep tasks.${userContext} ${context ? `Context: ${context}` : ''}${dietaryContext}
 
 User says: "${userMessage}"
 

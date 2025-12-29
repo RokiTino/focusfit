@@ -14,10 +14,10 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
 import { Card } from '@/components/Card';
 import { DietaryRestriction } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export default function ProfileScreen() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, isAnonymous } = useAuth();
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [confettiEnabled, setConfettiEnabled] = React.useState(true);
   const [voiceEnabled, setVoiceEnabled] = React.useState(true);
@@ -26,7 +26,7 @@ export default function ProfileScreen() {
   const dopamineWins = 47;
   const weekStreak = 3;
 
-  // Mock dietary restrictions (would come from context/state in production)
+  // Mock dietary restrictions (would come from Firestore in production)
   const dietaryRestrictions: DietaryRestriction[] = ['vegan', 'gluten_free'];
 
   const getDietaryLabel = (restriction: DietaryRestriction): string => {
@@ -54,6 +54,8 @@ export default function ProfileScreen() {
   };
 
   const handleRefreshPlan = async () => {
+    if (!user) return;
+
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Alert.alert(
@@ -70,10 +72,10 @@ export default function ProfileScreen() {
           onPress: async () => {
             setIsRefreshing(true);
             try {
-              // Generate new plan using Newell AI
+              // Generate new plan using Newell AI with Firebase user ID
               const { generateFocusPlan } = await import('@/services/ai');
-              const adhdHurdles = ['starting_is_hard']; // Would come from stored profile
-              const plan = await generateFocusPlan(adhdHurdles as any, dietaryRestrictions);
+              const addhHurdles = ['starting_is_hard']; // Would come from Firestore profile
+              const plan = await generateFocusPlan(addhHurdles as any, dietaryRestrictions, user.uid);
 
               console.log('New plan generated:', plan);
 
@@ -85,6 +87,31 @@ export default function ProfileScreen() {
             } finally {
               setIsRefreshing(false);
             }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLinkAccount = () => {
+    // In production, show a modal with email/password inputs to link anonymous account
+    Alert.alert(
+      'Link Your Account',
+      'Want to save your progress permanently? Link your guest account to an email.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Link Account',
+          onPress: () => {
+            // Navigate to a linking screen or show inline inputs
+            // For now, show a simple message
+            Alert.alert(
+              'Coming Soon',
+              'Account linking will allow you to save your progress permanently across devices.'
+            );
           },
         },
       ]
@@ -212,9 +239,29 @@ export default function ProfileScreen() {
 
         {/* User Info */}
         {user && (
-          <View style={styles.userInfoCard}>
-            <Text style={styles.userEmail}>{user.email}</Text>
-          </View>
+          <Card variant="elevated" style={styles.userInfoCard}>
+            <View style={styles.userInfoHeader}>
+              <Text style={styles.userInfoLabel}>Account</Text>
+              {isAnonymous && (
+                <View style={styles.guestBadge}>
+                  <Text style={styles.guestBadgeText}>Guest</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.userEmail}>
+              {user.email || 'Guest User'}
+            </Text>
+            {isAnonymous && (
+              <TouchableOpacity
+                style={styles.linkAccountButton}
+                onPress={handleLinkAccount}
+              >
+                <Text style={styles.linkAccountText}>
+                  🔗 Link to Email Account
+                </Text>
+              </TouchableOpacity>
+            )}
+          </Card>
         )}
 
         {/* Sign Out */}
@@ -417,13 +464,44 @@ const styles = StyleSheet.create({
   },
   userInfoCard: {
     marginTop: Spacing.lg,
-    padding: Spacing.md,
-    backgroundColor: Colors.secondaryLight,
-    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+  },
+  userInfoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  userInfoLabel: {
+    ...Typography.h3,
+    color: Colors.primary,
+  },
+  guestBadge: {
+    backgroundColor: Colors.accentSecondary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+  },
+  guestBadgeText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600',
   },
   userEmail: {
     ...Typography.body,
     color: Colors.textSecondary,
+    marginBottom: Spacing.md,
+  },
+  linkAccountButton: {
+    backgroundColor: Colors.secondary,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  linkAccountText: {
+    ...Typography.body,
+    color: Colors.primary,
+    fontWeight: '600',
   },
 });

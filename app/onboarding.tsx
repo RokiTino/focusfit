@@ -46,9 +46,9 @@ export default function OnboardingScreen() {
       return;
     }
 
-    // TODO: Store selected hurdles in context/state
-    // For now, navigate to dietary needs screen
-    router.push('/dietary-needs');
+    // Pass hurdles to dietary needs screen via URL params
+    const hurdlesParam = selectedHurdles.join(',');
+    router.push(`/dietary-needs?hurdles=${hurdlesParam}`);
   };
 
   return (

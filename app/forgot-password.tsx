@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -17,41 +18,23 @@ import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 
-export default function SignUpScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { sendPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
 
-  const validateForm = (): boolean => {
-    if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return false;
+  const handleSendReset = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
     }
 
     if (!email.includes('@')) {
       setError('Please enter a valid email address');
-      return false;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSignUp = async () => {
-    if (!validateForm()) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -59,25 +42,33 @@ export default function SignUpScreen() {
     setLoading(true);
     setError('');
 
-    const { error: authError } = await signUp(email, password);
+    const { error: resetError } = await sendPasswordReset(email);
 
-    if (authError) {
-      setError(getErrorMessage(authError.message));
+    if (resetError) {
+      setError(getErrorMessage(resetError.message));
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Navigate to onboarding after successful sign up
-      router.replace('/onboarding');
+      setEmailSent(true);
+      setLoading(false);
+
+      Alert.alert(
+        'Email Sent!',
+        'Check your inbox for instructions to reset your password.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
     }
   };
 
   const getErrorMessage = (errorMsg: string): string => {
-    if (errorMsg.includes('email-already-in-use')) {
-      return 'This email is already registered. Try signing in instead.';
-    }
-    if (errorMsg.includes('weak-password')) {
-      return 'Password must be at least 6 characters';
+    if (errorMsg.includes('user-not-found')) {
+      return 'No account found with this email address';
     }
     if (errorMsg.includes('invalid-email')) {
       return 'Please enter a valid email address';
@@ -111,9 +102,9 @@ export default function SignUpScreen() {
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.title}>Forgot Password?</Text>
             <Text style={styles.subtitle}>
-              Join FocusFit and start your personalized journey
+              No worries! Enter your email and we&apos;ll send you a reset link.
             </Text>
           </View>
 
@@ -131,39 +122,7 @@ export default function SignUpScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                editable={!loading}
-              />
-            </View>
-
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="At least 6 characters"
-                placeholderTextColor={Colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-            </View>
-
-            {/* Confirm Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter your password"
-                placeholderTextColor={Colors.textSecondary}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
+                editable={!loading && !emailSent}
               />
             </View>
 
@@ -175,22 +134,32 @@ export default function SignUpScreen() {
               </View>
             ) : null}
 
-            {/* Sign Up Button */}
+            {/* Success Message */}
+            {emailSent ? (
+              <View style={styles.successContainer}>
+                <Text style={styles.successIcon}>✅</Text>
+                <Text style={styles.successText}>
+                  Password reset email sent! Check your inbox.
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Send Reset Button */}
             <Button
-              title={loading ? 'Creating Account...' : 'Create Account'}
-              onPress={handleSignUp}
-              variant="accent"
+              title={loading ? 'Sending...' : 'Send Reset Link'}
+              onPress={handleSendReset}
+              variant="primary"
               size="large"
               loading={loading}
-              disabled={loading}
-              style={styles.signUpButton}
+              disabled={loading || emailSent}
+              style={styles.resetButton}
             />
 
-            {/* Login Link */}
+            {/* Back to Login Link */}
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
+              <Text style={styles.loginText}>Remember your password? </Text>
               <TouchableOpacity
-                onPress={() => router.replace('/login')}
+                onPress={() => router.back()}
                 disabled={loading}
               >
                 <Text style={styles.loginLink}>Sign In</Text>
@@ -244,6 +213,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...Typography.bodyLarge,
     color: Colors.textSecondary,
+    lineHeight: 28,
   },
   form: {
     gap: Spacing.lg,
@@ -285,7 +255,25 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     flex: 1,
   },
-  signUpButton: {
+  successContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.secondary + '40',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.secondary,
+  },
+  successIcon: {
+    fontSize: 20,
+  },
+  successText: {
+    ...Typography.body,
+    color: Colors.primary,
+    flex: 1,
+  },
+  resetButton: {
     marginTop: Spacing.md,
   },
   loginContainer: {

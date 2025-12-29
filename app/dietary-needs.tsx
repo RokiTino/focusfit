@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
-import { DietaryRestriction, DietaryOption } from '@/types';
+import { DietaryRestriction, DietaryOption, ADHDHurdle } from '@/types';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
+import { createUserProfile } from '@/services/firestore';
 
 const dietaryOptions: DietaryOption[] = [
   { id: 'lactose_free', label: 'Lactose-Free', shortLabel: 'LF', icon: '🥛' },
@@ -25,8 +28,16 @@ const dietaryOptions: DietaryOption[] = [
 
 export default function DietaryNeedsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const params = useLocalSearchParams();
   const [selectedRestrictions, setSelectedRestrictions] = useState<DietaryRestriction[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Get hurdles from URL params
+  const hurdlesParam = params.hurdles as string;
+  const adhdHurdles: ADHDHurdle[] = hurdlesParam
+    ? (hurdlesParam.split(',') as ADHDHurdle[])
+    : ['starting_is_hard'];
 
   const toggleRestriction = async (restriction: DietaryRestriction) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -48,30 +59,50 @@ export default function DietaryNeedsScreen() {
   };
 
   const handleContinue = async () => {
+    if (!user) {
+      Alert.alert('Error', 'Please sign in to continue');
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      // Get ADHD hurdles from previous screen (would be stored in context/state in production)
-      // For now, use a placeholder
-      const adhdHurdles = ['starting_is_hard'];
-
-      // Generate personalized plan using Newell AI with dietary restrictions
-      const { generateFocusPlan } = await import('@/services/ai');
-      const plan = await generateFocusPlan(
-        adhdHurdles as any,
-        selectedRestrictions.length > 0 ? selectedRestrictions : undefined
+      // Create user profile in Firestore
+      await createUserProfile(
+        user.uid,
+        user.email || 'guest@focusfit.app',
+        adhdHurdles,
+        selectedRestrictions.length > 0 ? selectedRestrictions : ['none']
       );
 
-      // TODO: Store plan and dietary restrictions in local storage or Supabase
-      console.log('Generated plan with dietary restrictions:', plan);
+      // Generate personalized plan using Newell AI with dietary restrictions
+      // This will automatically save to Firestore with user ID
+      const { generateFocusPlan } = await import('@/services/ai');
+      const plan = await generateFocusPlan(
+        adhdHurdles,
+        selectedRestrictions.length > 0 ? selectedRestrictions : undefined,
+        user.uid // Pass user ID to save plan to Firestore
+      );
+
+      console.log('User profile and plan created successfully:', plan);
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       // Navigate to main app
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Error generating plan:', error);
-      // Continue to app even if AI fails
-      router.replace('/(tabs)');
-    } finally {
+      console.error('Error setting up profile:', error);
+      Alert.alert(
+        'Setup Error',
+        'We had trouble setting up your profile. Continue anyway?',
+        [
+          { text: 'Try Again', style: 'cancel' },
+          {
+            text: 'Continue',
+            onPress: () => router.replace('/(tabs)'),
+          },
+        ]
+      );
       setIsGenerating(false);
     }
   };

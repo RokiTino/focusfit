@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,18 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { signInAsGuest } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleGetStarted = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -23,6 +27,22 @@ export default function WelcomeScreen() {
   const handleSignIn = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/login');
+  };
+
+  const handleContinueAsGuest = async () => {
+    setLoading(true);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const { error } = await signInAsGuest();
+
+    if (error) {
+      console.error('Error signing in as guest:', error);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setLoading(false);
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Navigation will be handled automatically by auth state change
+    }
   };
 
   return (
@@ -103,6 +123,15 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           variant="accent"
           size="large"
+          disabled={loading}
+        />
+        <Button
+          title="Continue as Guest"
+          onPress={handleContinueAsGuest}
+          variant="secondary"
+          size="large"
+          disabled={loading}
+          icon={loading ? <ActivityIndicator size="small" color={Colors.primary} /> : undefined}
         />
         <Button
           title="I Already Have an Account"
@@ -110,6 +139,7 @@ export default function WelcomeScreen() {
           variant="ghost"
           size="medium"
           style={styles.signInButton}
+          disabled={loading}
         />
       </View>
     </SafeAreaView>

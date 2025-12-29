@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -48,16 +48,24 @@ export default function LoginScreen() {
   };
 
   const getErrorMessage = (errorMsg: string): string => {
-    if (errorMsg.includes('Invalid login credentials')) {
+    if (errorMsg.includes('invalid-credential') || errorMsg.includes('user-not-found') || errorMsg.includes('wrong-password')) {
       return 'Email or password is incorrect';
     }
-    if (errorMsg.includes('Email not confirmed')) {
-      return 'Please check your email and confirm your account';
+    if (errorMsg.includes('too-many-requests')) {
+      return 'Too many attempts. Please try again later';
     }
-    if (errorMsg.includes('Network')) {
+    if (errorMsg.includes('network')) {
       return 'Network error. Please check your connection';
     }
+    if (errorMsg.includes('invalid-email')) {
+      return 'Please enter a valid email address';
+    }
     return 'Something went wrong. Please try again';
+  };
+
+  const handleForgotPassword = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/forgot-password');
   };
 
   const handleBack = async () => {
@@ -139,6 +147,15 @@ export default function LoginScreen() {
               disabled={loading}
               style={styles.loginButton}
             />
+
+            {/* Forgot Password Link */}
+            <TouchableOpacity
+              onPress={handleForgotPassword}
+              disabled={loading}
+              style={styles.forgotPasswordContainer}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+            </TouchableOpacity>
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
@@ -241,6 +258,15 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: Spacing.md,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    padding: Spacing.sm,
+  },
+  forgotPasswordText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textDecorationLine: 'underline',
   },
   signUpContainer: {
     flexDirection: 'row',

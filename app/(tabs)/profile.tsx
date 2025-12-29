@@ -14,8 +14,10 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
 import { Card } from '@/components/Card';
 import { DietaryRestriction } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {
+  const { signOut, user } = useAuth();
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [confettiEnabled, setConfettiEnabled] = React.useState(true);
   const [voiceEnabled, setVoiceEnabled] = React.useState(true);
@@ -208,8 +210,40 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
+        {/* User Info */}
+        {user && (
+          <View style={styles.userInfoCard}>
+            <Text style={styles.userEmail}>{user.email}</Text>
+          </View>
+        )}
+
         {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutButton}>
+        <TouchableOpacity
+          style={styles.signOutButton}
+          onPress={async () => {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Alert.alert(
+              'Sign Out',
+              'Are you sure you want to sign out?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Sign Out',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await signOut();
+                    await Haptics.notificationAsync(
+                      Haptics.NotificationFeedbackType.Success
+                    );
+                  },
+                },
+              ]
+            );
+          }}
+        >
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -380,5 +414,16 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textInverse,
     fontWeight: '600',
+  },
+  userInfoCard: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: Colors.secondaryLight,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  userEmail: {
+    ...Typography.body,
+    color: Colors.textSecondary,
   },
 });

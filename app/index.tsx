@@ -1,13 +1,36 @@
 import { Redirect } from 'expo-router';
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { Colors } from '@/constants/theme';
 
 export default function Index() {
-  // In a real app, check if user has completed onboarding
-  const hasCompletedOnboarding = false;
+  const { session, loading } = useAuth();
 
-  if (hasCompletedOnboarding) {
-    return <Redirect href="/(tabs)" />;
+  // Show loading indicator while checking auth state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
-  return <Redirect href="/onboarding" />;
+  // Not authenticated - show welcome screen
+  if (!session) {
+    return <Redirect href="/welcome" />;
+  }
+
+  // Authenticated - redirect to main app
+  // In production, you might check if onboarding is complete here
+  return <Redirect href="/(tabs)" />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

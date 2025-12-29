@@ -50,7 +50,6 @@ export default function WelcomeScreen() {
       setLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Navigate to dietary needs for setup
       setLoading(false);
       router.replace('/dietary-needs');
     }
@@ -74,7 +73,6 @@ export default function WelcomeScreen() {
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setGoogleLoading(false);
-      // Navigate based on user status
       if (isNewUser) {
         router.replace('/dietary-needs');
       } else {
@@ -101,7 +99,6 @@ export default function WelcomeScreen() {
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setAppleLoading(false);
-      // Navigate based on user status
       if (isNewUser) {
         router.replace('/dietary-needs');
       } else {
@@ -119,6 +116,7 @@ export default function WelcomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {/* Hero Branding */}
         <View style={styles.hero}>
@@ -166,16 +164,13 @@ export default function WelcomeScreen() {
           <Button
             title="Continue as Guest"
             onPress={handleContinueAsGuest}
-            variant="secondary"
+            variant="outline"
             size="large"
             disabled={isAnyLoading}
-            icon={loading ? <ActivityIndicator size="small" color={Colors.primary} /> : undefined}
+            loading={loading}
             style={styles.guestButton}
           />
         </View>
-
-        {/* Spacer */}
-        <View style={styles.spacer} />
       </ScrollView>
 
       {/* Footer */}
@@ -184,9 +179,11 @@ export default function WelcomeScreen() {
           onPress={handleSignIn}
           disabled={isAnyLoading}
           activeOpacity={0.7}
+          style={styles.footerButton}
         >
           <Text style={styles.footerText}>
-            Already have an account? <Text style={styles.footerLink}>Log In</Text>
+            Already have an account?{' '}
+            <Text style={styles.footerLink}>Log In</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -204,12 +201,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: Spacing.xxl * 2,
+    paddingTop: Spacing.xxl + Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   hero: {
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xxl * 2,
+    marginBottom: Spacing.xxl + Spacing.lg,
   },
   logoContainer: {
     width: 120,
@@ -230,13 +228,15 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
     marginBottom: Spacing.md,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   tagline: {
     ...Typography.bodyLarge,
     fontSize: 18,
     color: Colors.secondary,
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 28,
+    fontWeight: '500',
   },
   buttonStack: {
     paddingHorizontal: Spacing.xl,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.gray300,
+    backgroundColor: Colors.gray400,
     opacity: 0.3,
   },
   dividerText: {
@@ -259,29 +259,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     fontSize: 14,
     opacity: 0.7,
+    fontWeight: '500',
   },
   guestButton: {
-    marginTop: Spacing.md,
-  },
-  spacer: {
-    height: Spacing.xxl * 2,
+    marginTop: Spacing.lg,
   },
   footer: {
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray300,
+    paddingVertical: Spacing.xl + Spacing.sm,
     backgroundColor: Colors.primary,
+  },
+  footerButton: {
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
   },
   footerText: {
     ...Typography.body,
-    color: Colors.secondary,
+    color: Colors.textLight,
     textAlign: 'center',
     fontSize: 16,
   },
   footerLink: {
     color: Colors.secondary,
     fontWeight: '600',
-    textDecorationLine: 'underline',
   },
 });

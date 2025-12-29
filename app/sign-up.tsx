@@ -217,11 +217,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.lg,
-  },
-  header: {
+    paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xxl,
+  },
+  header: {
+    marginBottom: Spacing.xxl + Spacing.md,
   },
   backButton: {
     width: 48,
@@ -239,29 +240,39 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.hero,
+    fontSize: 40,
     color: Colors.primary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    letterSpacing: -0.5,
+    fontWeight: '700',
   },
   subtitle: {
     ...Typography.bodyLarge,
+    fontSize: 18,
     color: Colors.textSecondary,
+    lineHeight: 28,
+    fontWeight: '500',
   },
   form: {
-    gap: Spacing.lg,
+    gap: Spacing.xl,
   },
   inputGroup: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   label: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.primary,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   input: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 4,
     ...Typography.bodyLarge,
+    fontSize: 17,
     color: Colors.text,
     borderWidth: 2,
     borderColor: Colors.gray200,
@@ -287,20 +298,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   signUpButton: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.md,
+    paddingTop: Spacing.lg,
   },
   loginText: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.textSecondary,
   },
   loginLink: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.accent,
     fontWeight: '600',
   },

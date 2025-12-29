@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors, Typography } from '@/constants/theme';
+import { Colors, Spacing, Typography, Shadows, BorderRadius } from '@/constants/theme';
 
 export default function SplashScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    // Display splash for 2 seconds while Firebase initializes
     const timer = setTimeout(() => {
-      // Navigation will be handled by index.tsx based on auth state
       router.replace('/');
     }, 2000);
 
@@ -19,8 +17,10 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoEmoji}>🎯</Text>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoEmoji}>🎯</Text>
+        </View>
         <Text style={styles.appName}>FocusFit</Text>
         <Text style={styles.tagline}>Fitness for the ADHD Brain</Text>
       </View>
@@ -35,23 +35,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoContainer: {
+  content: {
     alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  logoContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: BorderRadius.xl + BorderRadius.md,
+    backgroundColor: Colors.secondaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xxl,
+    ...Shadows.large,
   },
   logoEmoji: {
     fontSize: 80,
-    marginBottom: 20,
   },
   appName: {
     ...Typography.hero,
-    fontSize: 48,
+    fontSize: 52,
     color: Colors.textInverse,
-    marginBottom: 12,
+    marginBottom: Spacing.md,
     textAlign: 'center',
+    letterSpacing: -1,
+    fontWeight: '700',
   },
   tagline: {
     ...Typography.bodyLarge,
+    fontSize: 20,
     color: Colors.secondary,
     textAlign: 'center',
+    fontWeight: '500',
+    opacity: 0.95,
   },
 });

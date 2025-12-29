@@ -92,10 +92,12 @@ export default function LoginScreen() {
       setGoogleLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setGoogleLoading(false);
       if (isNewUser) {
-        router.replace('/onboarding');
+        router.replace('/dietary-needs');
+      } else {
+        router.replace('/(tabs)');
       }
-      // Existing users will be navigated by AuthContext
     }
   };
 
@@ -112,10 +114,12 @@ export default function LoginScreen() {
       setAppleLoading(false);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setAppleLoading(false);
       if (isNewUser) {
-        router.replace('/onboarding');
+        router.replace('/dietary-needs');
+      } else {
+        router.replace('/(tabs)');
       }
-      // Existing users will be navigated by AuthContext
     }
   };
 
@@ -254,11 +258,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.lg,
-  },
-  header: {
+    paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xxl,
+  },
+  header: {
+    marginBottom: Spacing.xxl + Spacing.md,
   },
   backButton: {
     width: 48,
@@ -276,29 +281,39 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.hero,
+    fontSize: 40,
     color: Colors.primary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    letterSpacing: -0.5,
+    fontWeight: '700',
   },
   subtitle: {
     ...Typography.bodyLarge,
+    fontSize: 18,
     color: Colors.textSecondary,
+    lineHeight: 28,
+    fontWeight: '500',
   },
   form: {
-    gap: Spacing.lg,
+    gap: Spacing.xl,
   },
   inputGroup: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   label: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.primary,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   input: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 4,
     ...Typography.bodyLarge,
+    fontSize: 17,
     color: Colors.text,
     borderWidth: 2,
     borderColor: Colors.gray200,
@@ -324,45 +339,53 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loginButton: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   forgotPasswordContainer: {
     alignItems: 'center',
-    padding: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
   forgotPasswordText: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.textSecondary,
     textDecorationLine: 'underline',
+    fontWeight: '500',
   },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   signUpText: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.textSecondary,
   },
   signUpLink: {
     ...Typography.body,
+    fontSize: 16,
     color: Colors.accent,
     fontWeight: '600',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: Spacing.lg,
+    marginVertical: Spacing.xl,
   },
   dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: Colors.gray300,
+    opacity: 0.4,
   },
   dividerText: {
     ...Typography.body,
+    fontSize: 15,
     color: Colors.textSecondary,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    fontWeight: '500',
+    opacity: 0.8,
   },
 });

@@ -8,7 +8,45 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native - iOS
+ios/Pods/
+ios/**/*.mode1v3
+ios/**/*.mode2v3
+ios/**/*.moved-aside
+ios/**/*.pbxuser
+ios/**/*.perspectivev3
+ios/**/*sync/
+ios/**/.sconsign.dblite
+ios/**/.tags*
+ios/**/.vagrant/
+ios/**/DerivedData/
+ios/build/
+ios/*.xcworkspace
+!ios/*.xcodeproj
+!ios/*.xcworkspace/contents.xcworkspacedata
+ios/*.xcuserstate
+ios/*.hmap
+ios/*.ipa
+ios/*.dSYM.zip
+ios/*.dSYM
+ios/.xcode.env.local
+Pods/
+
+# Native - Android
+android/build/
+android/.gradle/
+android/app/build/
+android/app/.cxx/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Native - General
 .kotlin/
 *.orig.*
 *.jks

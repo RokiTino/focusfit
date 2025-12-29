@@ -13,15 +13,29 @@ import {
   signInWithCredential,
   OAuthProvider,
 } from 'firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import { auth } from '@/lib/firebase';
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID || '',
-});
+// Lazy import Google Sign-In to prevent crashes when native module isn't available
+let GoogleSignin: any = null;
+let isGoogleSignInAvailable = false;
+
+try {
+  // Only import if the module is available
+  const GoogleSignInModule = require('@react-native-google-signin/google-signin');
+  GoogleSignin = GoogleSignInModule.GoogleSignin;
+
+  // Configure Google Sign-In
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID || '',
+  });
+  isGoogleSignInAvailable = true;
+  console.log('[Auth] Google Sign-In module loaded successfully');
+} catch (error) {
+  console.warn('[Auth] Google Sign-In module not available. This is expected in Expo Go. Use a development build for social auth.');
+  isGoogleSignInAvailable = false;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -107,6 +121,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('[Google Sign-In] Starting authentication flow...');
+
+      // Check if Google Sign-In module is available
+      if (!isGoogleSignInAvailable || !GoogleSignin) {
+        throw new Error('Google Sign-In is not available. Please use a development build or production build. This feature does not work in Expo Go.');
+      }
 
       // Check if device supports Google Play Services
       console.log('[Google Sign-In] Checking for Google Play Services...');

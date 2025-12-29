@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/constants/theme';
 
@@ -72,8 +73,8 @@ export default function TabLayout() {
 
 function TabBarIcon({ name, color }: { name: string; color: string }) {
   return (
-    <span style={{ fontSize: 24, filter: color === Colors.primary ? 'none' : 'grayscale(1) opacity(0.5)' }}>
+    <Text style={{ fontSize: 24, opacity: color === Colors.primary ? 1 : 0.5 }}>
       {name}
-    </span>
+    </Text>
   );
 }

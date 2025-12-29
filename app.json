@@ -11,7 +11,6 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.focusfit.app",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -28,8 +27,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.focusfit.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.focusfit.app"
     },
     "web": {
       "bundler": "metro",

@@ -1,0 +1,42 @@
+{
+  "_comment": "PLACEHOLDER FILE - REPLACE WITH YOUR ACTUAL google-services.json from Firebase Console",
+  "_instruction": "Download from Firebase Console → Project Settings → Android App → Download google-services.json",
+  "project_info": {
+    "project_number": "1044421386248",
+    "firebase_url": "https://focusefit.firebaseio.com",
+    "project_id": "focusefit",
+    "storage_bucket": "focusefit.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044421386248:android:YOUR_APP_ID",
+        "android_client_info": {
+          "package_name": "com.focusfit.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1044421386248-snme3hktecnihd077729n42ia6bleh49.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY_HERE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1044421386248-snme3hktecnihd077729n42ia6bleh49.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

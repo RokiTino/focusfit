@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044421386248",
+    "project_id": "focusefit",
+    "storage_bucket": "focusefit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044421386248:android:48e0b5ce65c629a8c871bd",
+        "android_client_info": {
+          "package_name": "com.focusfit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDQXT0zdbzvAwjqpxKlCtWkATxrEL4ZfE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

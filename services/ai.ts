@@ -203,6 +203,89 @@ Response:`;
 }
 
 /**
+ * Simplify a task for overwhelmed users using AI
+ * Transforms a task into a much smaller, low-friction version
+ */
+export async function simplifyTask(
+  taskTitle: string,
+  taskType: 'workout' | 'meal',
+  taskDescription?: string
+): Promise<{ title: string; description: string; duration?: number }> {
+  const prompt = `You are helping someone with ADHD who is feeling overwhelmed. They need to do this task but it feels too big right now.
+
+ORIGINAL TASK:
+Type: ${taskType}
+Title: "${taskTitle}"
+${taskDescription ? `Description: "${taskDescription}"` : ''}
+
+Create a MUCH SMALLER, LOW-FRICTION version of this task. The simplified version should:
+- Take 2-5 minutes maximum
+- Remove all cognitive barriers
+- Feel so easy it's almost impossible to fail
+- Still provide a sense of accomplishment
+
+Examples:
+- "20-minute HIIT Workout" → "2-minute gentle movement"
+- "Chop and prep stir-fry" → "Assemble a 5-minute snack bowl"
+- "10-minute run" → "Walk around your room for 2 minutes"
+- "Make breakfast smoothie" → "Grab a piece of fruit"
+
+Format your response as JSON with this structure:
+{
+  "title": "The simplified task title (keep it SHORT and non-intimidating)",
+  "description": "Brief, encouraging description (1 sentence max)",
+  "duration": 2
+}`;
+
+  try {
+    const response = await generateText({ prompt });
+
+    console.log('[AI] Simplify task response:', response);
+
+    // Parse the AI response
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('[AI] No JSON found in simplify response');
+      throw new Error('Failed to parse AI response');
+    }
+
+    const cleanedJson = jsonMatch[0]
+      .replace(/,(\s*[}\]])/g, '$1')
+      .replace(/[\u0000-\u001F]+/g, '');
+
+    const simplified = JSON.parse(cleanedJson);
+
+    // Validate response
+    if (!simplified.title || !simplified.description) {
+      throw new Error('Invalid simplified task structure');
+    }
+
+    return {
+      title: simplified.title,
+      description: simplified.description,
+      duration: simplified.duration || 2,
+    };
+  } catch (error) {
+    console.error('[AI] Error simplifying task:', error);
+
+    // Fallback simplified versions
+    if (taskType === 'workout') {
+      return {
+        title: '2-Minute Gentle Movement',
+        description: 'Just move your body a tiny bit',
+        duration: 2,
+      };
+    } else {
+      return {
+        title: '5-Minute Quick Snack',
+        description: 'Grab something easy and nourishing',
+        duration: 5,
+      };
+    }
+  }
+}
+
+/**
  * Fallback default plan
  */
 function getDefaultPlan(): FocusPlan {

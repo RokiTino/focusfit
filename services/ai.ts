@@ -68,10 +68,23 @@ Format your response as JSON with this structure:
     // Parse the AI response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Failed to parse AI response');
+      console.error('[AI] No JSON found in response:', response);
+      throw new Error('Failed to parse AI response - no JSON found');
     }
 
-    const aiData = JSON.parse(jsonMatch[0]);
+    let aiData;
+    try {
+      // Clean the JSON string - remove any trailing commas or invalid characters
+      const cleanedJson = jsonMatch[0]
+        .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
+        .replace(/[\u0000-\u001F]+/g, '');  // Remove control characters
+
+      aiData = JSON.parse(cleanedJson);
+    } catch (parseError) {
+      console.error('[AI] JSON Parse Error:', parseError);
+      console.error('[AI] Attempted to parse:', jsonMatch[0].substring(0, 500));
+      throw new Error('Failed to parse AI response - invalid JSON format');
+    }
 
     // Convert to FocusPlan format
     const plan: FocusPlan = {

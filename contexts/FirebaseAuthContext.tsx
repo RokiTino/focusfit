@@ -21,17 +21,21 @@ import { auth } from '@/lib/firebase';
 let GoogleSignin: any = null;
 let isGoogleSignInAvailable = false;
 
+// Google Sign-In Web Client ID fallback (from GoogleService-Info.plist)
+const GOOGLE_WEB_CLIENT_ID = '1044421386248-snme3hktecnihd077729n42ia6bleh49.apps.googleusercontent.com';
+
 try {
   // Only import if the module is available
   const GoogleSignInModule = require('@react-native-google-signin/google-signin');
   GoogleSignin = GoogleSignInModule.GoogleSignin;
 
-  // Configure Google Sign-In
+  // Configure Google Sign-In with fallback
+  const webClientId = process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID || GOOGLE_WEB_CLIENT_ID;
   GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID || '',
+    webClientId,
   });
   isGoogleSignInAvailable = true;
-  console.log('[Auth] Google Sign-In module loaded successfully');
+  console.log('[Auth] ✓ Google Sign-In configured with Web Client ID');
 } catch (error) {
   console.warn('[Auth] Google Sign-In module not available. This is expected in Expo Go. Use a development build for social auth.');
   isGoogleSignInAvailable = false;

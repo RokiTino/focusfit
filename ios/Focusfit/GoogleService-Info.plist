@@ -2,16 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	PLACEHOLDER FILE - REPLACE WITH YOUR ACTUAL GoogleService-Info.plist
-	Download from Firebase Console → Project Settings → iOS App → Download GoogleService-Info.plist
-	-->
 	<key>CLIENT_ID</key>
-	<string>YOUR_IOS_CLIENT_ID.apps.googleusercontent.com</string>
+	<string>1044421386248-snme3hktecnihd077729n42ia6bleh49.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.1044421386248-snme3hktecnihd077729n42ia6bleh49</string>
 	<key>API_KEY</key>
-	<string>YOUR_API_KEY</string>
+	<string>AIzaSyCzoC2pj9xCAPh8KGJI1vIRDOkhYHEvm_g</string>
 	<key>GCM_SENDER_ID</key>
 	<string>1044421386248</string>
 	<key>PLIST_VERSION</key>
@@ -21,7 +17,7 @@
 	<key>PROJECT_ID</key>
 	<string>focusefit</string>
 	<key>STORAGE_BUCKET</key>
-	<string>focusefit.appspot.com</string>
+	<string>focusefit.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -33,8 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1044421386248:ios:YOUR_APP_ID</string>
-	<key>DATABASE_URL</key>
-	<string>https://focusefit.firebaseio.com</string>
+	<string>1:1044421386248:ios:36d9d2612636f714c871bd</string>
 </dict>
 </plist>

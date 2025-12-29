@@ -12,10 +12,12 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { Button } from '@/components/Button';
+import { DietaryRestriction } from '@/types';
 
 const recipeData = {
   title: 'Quick Chicken &\nVeggie Stir-Fry',
   prepTime: 5,
+  dietaryTags: [] as DietaryRestriction[], // Would come from AI-generated meal
   steps: [
     {
       number: 1,
@@ -40,6 +42,18 @@ const recipeData = {
     '2 tbsp soy sauce',
     '2 tbsp olive oil',
   ],
+};
+
+const getDietaryBadgeLabel = (restriction: DietaryRestriction): string => {
+  const labels: Record<DietaryRestriction, string> = {
+    lactose_free: 'LF',
+    gluten_free: 'GF',
+    nut_free: 'NF',
+    vegetarian: 'VG',
+    vegan: 'VE',
+    none: '',
+  };
+  return labels[restriction];
 };
 
 export default function MealPrepScreen() {
@@ -75,9 +89,23 @@ export default function MealPrepScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          {recipeData.dietaryTags && recipeData.dietaryTags.length > 0 && (
+            <View style={styles.dietaryBadges}>
+              {recipeData.dietaryTags.map((tag) => {
+                const label = getDietaryBadgeLabel(tag);
+                return label ? (
+                  <View key={tag} style={styles.dietaryBadge}>
+                    <Text style={styles.dietaryBadgeText}>{label}</Text>
+                  </View>
+                ) : null;
+              })}
+            </View>
+          )}
+        </View>
         <Text style={styles.headerTitle}>{recipeData.title}</Text>
       </View>
 
@@ -164,10 +192,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
+    padding: Spacing.lg,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
-    gap: Spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
   },
   backButton: {
     width: 40,
@@ -182,10 +213,28 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: Colors.primary,
   },
+  dietaryBadges: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  dietaryBadge: {
+    backgroundColor: Colors.secondary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    minWidth: 36,
+    alignItems: 'center',
+    ...Shadows.small,
+  },
+  dietaryBadgeText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+  },
   headerTitle: {
     ...Typography.h2,
     color: Colors.primary,
-    flex: 1,
   },
   content: {
     flex: 1,

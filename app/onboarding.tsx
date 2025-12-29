@@ -29,7 +29,6 @@ const quizOptions: QuizOption[] = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const [selectedHurdles, setSelectedHurdles] = useState<ADHDHurdle[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const toggleHurdle = async (hurdle: ADHDHurdle) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -47,25 +46,9 @@ export default function OnboardingScreen() {
       return;
     }
 
-    setIsGenerating(true);
-
-    try {
-      // Generate personalized plan using Newell AI
-      const { generateFocusPlan } = await import('@/services/ai');
-      const plan = await generateFocusPlan(selectedHurdles);
-
-      // TODO: Store plan in local storage or Supabase
-      console.log('Generated plan:', plan);
-
-      // Navigate to main app
-      router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Error generating plan:', error);
-      // Continue to app even if AI fails
-      router.replace('/(tabs)');
-    } finally {
-      setIsGenerating(false);
-    }
+    // TODO: Store selected hurdles in context/state
+    // For now, navigate to dietary needs screen
+    router.push('/dietary-needs');
   };
 
   return (
@@ -130,10 +113,9 @@ export default function OnboardingScreen() {
       {/* Fixed Bottom Button */}
       <View style={styles.footer}>
         <Button
-          title={isGenerating ? 'Generating Your Plan...' : 'Continue'}
+          title="Continue"
           onPress={handleContinue}
           disabled={selectedHurdles.length === 0}
-          loading={isGenerating}
           variant="primary"
         />
       </View>

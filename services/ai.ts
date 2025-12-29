@@ -1,13 +1,30 @@
 import { generateText } from '@fastshot/ai';
-import { ADHDHurdle, FocusPlan, WorkoutTask, MealTask } from '@/types';
+import { ADHDHurdle, FocusPlan, WorkoutTask, MealTask, DietaryRestriction } from '@/types';
 
 /**
- * Generate a personalized FocusPlan based on user's ADHD hurdles
+ * Generate a personalized FocusPlan based on user's ADHD hurdles and dietary restrictions
  */
-export async function generateFocusPlan(hurdles: ADHDHurdle[]): Promise<FocusPlan> {
+export async function generateFocusPlan(
+  hurdles: ADHDHurdle[],
+  dietaryRestrictions?: DietaryRestriction[]
+): Promise<FocusPlan> {
   const hurdleDescriptions = hurdles.map((h) => h.replace(/_/g, ' ')).join(', ');
 
-  const prompt = `You are an ADHD-focused fitness and meal planning expert. Create a simple, low-friction 1-week plan for someone with these challenges: ${hurdleDescriptions}.
+  // Build dietary constraints section
+  let dietaryConstraints = '';
+  if (dietaryRestrictions && dietaryRestrictions.length > 0 && !dietaryRestrictions.includes('none')) {
+    const restrictions = dietaryRestrictions
+      .map((r) => r.replace(/_/g, ' '))
+      .join(', ');
+    dietaryConstraints = `\n\nDIETARY RESTRICTIONS (CRITICAL):
+- User has the following dietary restrictions: ${restrictions}
+- ALL meals MUST exclude ingredients that violate these restrictions
+- Use smart swaps: rice instead of pasta for gluten-free, plant-based proteins for vegan, etc.
+- Each meal must include "dietaryTags" array listing which restrictions it meets (e.g., ["gluten_free", "vegan"])
+- Ensure meals are safe and clearly labeled`;
+  }
+
+  const prompt = `You are an ADHD-focused fitness and meal planning expert. Create a simple, low-friction 1-week plan for someone with these challenges: ${hurdleDescriptions}.${dietaryConstraints}
 
 Requirements:
 - 3 short workouts per week (5-15 minutes each)
@@ -36,7 +53,8 @@ Format your response as JSON with this structure:
       "prepTime": 5,
       "servings": 2,
       "difficulty": "easy",
-      "description": "Simple protein-rich meal"
+      "description": "Simple protein-rich meal",
+      "dietaryTags": ["vegan", "gluten_free"]
     }
   ]
 }`;
@@ -75,6 +93,7 @@ Format your response as JSON with this structure:
         isCompleted: false,
         steps: [],
         ingredients: [],
+        dietaryTags: m.dietaryTags || [],
       })),
       createdAt: new Date().toISOString(),
       generatedByAI: true,
@@ -89,13 +108,22 @@ Format your response as JSON with this structure:
 }
 
 /**
- * Generate AI Body Double chat response
+ * Generate AI Body Double chat response with dietary awareness
  */
 export async function generateBodyDoubleResponse(
   userMessage: string,
-  context?: string
+  context?: string,
+  dietaryRestrictions?: DietaryRestriction[]
 ): Promise<string> {
-  const prompt = `You are a supportive AI Body Double helping someone with ADHD complete their fitness and meal prep tasks. ${context ? `Context: ${context}` : ''}
+  let dietaryContext = '';
+  if (dietaryRestrictions && dietaryRestrictions.length > 0 && !dietaryRestrictions.includes('none')) {
+    const restrictions = dietaryRestrictions
+      .map((r) => r.replace(/_/g, ' '))
+      .join(', ');
+    dietaryContext = ` IMPORTANT: User has dietary restrictions: ${restrictions}. If suggesting meals or snacks, ONLY recommend options that fit these restrictions.`;
+  }
+
+  const prompt = `You are a supportive AI Body Double helping someone with ADHD complete their fitness and meal prep tasks. ${context ? `Context: ${context}` : ''}${dietaryContext}
 
 User says: "${userMessage}"
 
@@ -104,6 +132,7 @@ Respond in a warm, encouraging, and non-judgmental way. Keep responses short (1-
 - Celebrating small wins
 - Reducing overwhelm
 - Being a supportive presence
+- If suggesting food, respect their dietary restrictions
 
 Response:`;
 

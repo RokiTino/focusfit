@@ -8,17 +8,86 @@ import {
   StatusBar,
   TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
 import { Card } from '@/components/Card';
+import { DietaryRestriction } from '@/types';
 
 export default function ProfileScreen() {
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [confettiEnabled, setConfettiEnabled] = React.useState(true);
   const [voiceEnabled, setVoiceEnabled] = React.useState(true);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const dopamineWins = 47;
   const weekStreak = 3;
+
+  // Mock dietary restrictions (would come from context/state in production)
+  const dietaryRestrictions: DietaryRestriction[] = ['vegan', 'gluten_free'];
+
+  const getDietaryLabel = (restriction: DietaryRestriction): string => {
+    const labels: Record<DietaryRestriction, string> = {
+      lactose_free: 'Lactose-Free',
+      gluten_free: 'Gluten-Free',
+      nut_free: 'Nut-Free',
+      vegetarian: 'Vegetarian',
+      vegan: 'Vegan',
+      none: 'No restrictions',
+    };
+    return labels[restriction];
+  };
+
+  const getDietaryIcon = (restriction: DietaryRestriction): string => {
+    const icons: Record<DietaryRestriction, string> = {
+      lactose_free: '🥛',
+      gluten_free: '🌾',
+      nut_free: '🥜',
+      vegetarian: '🥗',
+      vegan: '🌱',
+      none: '✓',
+    };
+    return icons[restriction];
+  };
+
+  const handleRefreshPlan = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    Alert.alert(
+      'Refresh Your Plan?',
+      'This will generate a new weekly plan based on your current ADHD hurdles and dietary restrictions. Your progress will be saved.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Refresh',
+          style: 'default',
+          onPress: async () => {
+            setIsRefreshing(true);
+            try {
+              // Generate new plan using Newell AI
+              const { generateFocusPlan } = await import('@/services/ai');
+              const adhdHurdles = ['starting_is_hard']; // Would come from stored profile
+              const plan = await generateFocusPlan(adhdHurdles as any, dietaryRestrictions);
+
+              console.log('New plan generated:', plan);
+
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Success!', 'Your new plan is ready. Check the Dashboard to see your updated tasks.');
+            } catch (error) {
+              console.error('Error refreshing plan:', error);
+              Alert.alert('Oops!', 'We had trouble generating a new plan. Please try again.');
+            } finally {
+              setIsRefreshing(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -65,6 +134,33 @@ export default function ProfileScreen() {
           </View>
           <TouchableOpacity style={styles.editButton}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </Card>
+
+        {/* Dietary Restrictions */}
+        <Card variant="elevated" style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Dietary Restrictions</Text>
+          {dietaryRestrictions.length > 0 && !dietaryRestrictions.includes('none') ? (
+            <View style={styles.hurdlesList}>
+              {dietaryRestrictions.map((restriction) => (
+                <View key={restriction} style={styles.hurdleItem}>
+                  <Text style={styles.hurdleIcon}>{getDietaryIcon(restriction)}</Text>
+                  <Text style={styles.hurdleText}>{getDietaryLabel(restriction)}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noRestrictionsText}>No dietary restrictions</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.refreshButton, isRefreshing && styles.refreshButtonDisabled]}
+            onPress={handleRefreshPlan}
+            disabled={isRefreshing}
+          >
+            <Text style={styles.refreshButtonIcon}>🔄</Text>
+            <Text style={styles.refreshButtonText}>
+              {isRefreshing ? 'Refreshing Plan...' : 'Refresh My Plan'}
+            </Text>
           </TouchableOpacity>
         </Card>
 
@@ -256,6 +352,33 @@ const styles = StyleSheet.create({
   signOutText: {
     ...Typography.body,
     color: Colors.error,
+    fontWeight: '600',
+  },
+  noRestrictionsText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  refreshButton: {
+    backgroundColor: Colors.accent,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  refreshButtonDisabled: {
+    opacity: 0.6,
+  },
+  refreshButtonIcon: {
+    fontSize: 20,
+  },
+  refreshButtonText: {
+    ...Typography.body,
+    color: Colors.textInverse,
     fontWeight: '600',
   },
 });

@@ -7,9 +7,24 @@ export type ADHDHurdle =
   | 'decision_paralysis'
   | 'time_blindness';
 
+export type DietaryRestriction =
+  | 'lactose_free'
+  | 'gluten_free'
+  | 'nut_free'
+  | 'vegetarian'
+  | 'vegan'
+  | 'none';
+
 export interface OnboardingQuizAnswer {
   hurdle: ADHDHurdle;
   label: string;
+  icon: string;
+}
+
+export interface DietaryOption {
+  id: DietaryRestriction;
+  label: string;
+  shortLabel: string; // For badges (e.g., "GF", "LF", "VG")
   icon: string;
 }
 
@@ -49,6 +64,7 @@ export interface MealTask {
   ingredients: Ingredient[];
   isCompleted: boolean;
   scheduledFor?: string;
+  dietaryTags?: DietaryRestriction[]; // Tags indicating meal compatibility
 }
 
 export interface RecipeStep {
@@ -98,6 +114,7 @@ export interface UserProfile {
   id: string;
   email: string;
   adhdHurdles: ADHDHurdle[];
+  dietaryRestrictions: DietaryRestriction[];
   currentPlanId?: string;
   dopamineWins: DopamineWin[];
   preferences: {
